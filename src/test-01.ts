@@ -1,6 +1,11 @@
 
-import su = module("StanfordCoreNLP");
+import nlplib = module("StanfordCoreNLP");
 
-var suServer = new su.StanfordCoreNLP.Server();
+var config = {};
+var nlpServer = new nlplib.StanfordCoreNLP.Server("localhost", "5678", config);
 
-suServer.hello("Mike");
+console.log("NLP server status: " + nlpServer.getStatus());
+nlpServer.start();
+nlpServer.start();
+nlpServer.stop();
+nlpServer.stop();
