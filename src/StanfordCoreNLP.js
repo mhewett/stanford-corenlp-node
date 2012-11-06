@@ -1,42 +1,81 @@
+var spawn = require("child_process").spawn;
 (function (StanfordCoreNLP) {
     var Server = (function () {
         function Server(_host, _port, _config) {
-            this.status = ServerStatus.STOPPED;
+            this.state = ServerState.STOPPED;
             this.startTime = null;
+            this.nlpProcess = null;
             this.host = _host;
             this.port = _port;
             this.config = _config;
         }
         Server.prototype.getStatus = function () {
-            return this.status;
+            var status = new ServerStatus();
+            status.setState(this.state);
+            status.setStartTime(this.startTime);
+            return status;
         };
         Server.prototype.start = function () {
-            if(this.status === ServerStatus.STARTED) {
+            if(this.state === ServerState.STARTED) {
                 console.log("The server was already started at " + this.startTime.toString());
-                return this.status;
+                return this.state;
             }
-            this.status = ServerStatus.STARTED;
+            this.runNLP();
+            this.state = ServerState.STARTED;
             this.startTime = new Date();
             console.log("The NLP server has been started at " + this.startTime.toString());
-            return this.status;
+            return this.state;
         };
         Server.prototype.stop = function () {
-            if(this.status === ServerStatus.STOPPED) {
+            if(this.state === ServerState.STOPPED) {
                 console.log("The server is already stopped.");
-                return this.status;
+                return this.state;
             }
-            this.status = ServerStatus.STOPPED;
+            this.state = ServerState.STOPPED;
             this.startTime = null;
             console.log("The NLP server has been stopped.");
-            return this.status;
+            return this.state;
+        };
+        Server.prototype.runNLP = function () {
+            var myInstance = this;
+            this.nlpProcess = spawn("ls", [
+                "-ls", 
+                "/users"
+            ]);
+            this.nlpProcess.stdout.on("data", function (data) {
+                console.log("stdout: " + data);
+            });
+            this.nlpProcess.stderr.on("data", function (data) {
+                console.log("stderr: " + data);
+            });
+            this.nlpProcess.on("exit", function (exitCode) {
+                myInstance.stop();
+            });
         };
         return Server;
     })();
     StanfordCoreNLP.Server = Server;    
+    var ServerState = (function () {
+        function ServerState() { }
+        ServerState.STOPPED = "Stopped";
+        ServerState.STARTED = "Started";
+        return ServerState;
+    })();
+    StanfordCoreNLP.ServerState = ServerState;    
     var ServerStatus = (function () {
         function ServerStatus() { }
-        ServerStatus.STOPPED = "Stopped";
-        ServerStatus.STARTED = "Started";
+        ServerStatus.prototype.setState = function (state) {
+            this.state = state;
+        };
+        ServerStatus.prototype.setStartTime = function (time) {
+            this.startTime = time;
+        };
+        ServerStatus.prototype.getState = function () {
+            return this.state;
+        };
+        ServerStatus.prototype.getStartTime = function () {
+            return this.startTime;
+        };
         return ServerStatus;
     })();
     StanfordCoreNLP.ServerStatus = ServerStatus;    
