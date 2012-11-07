@@ -148,4 +148,21 @@ export module StanfordCoreNLP {
             return this.startTime;
         }
     }
+
+    /**
+     * This class retrieves the config object for the NLP Server.
+     */
+    export class Config {
+        
+        private config: string;
+
+        /**
+         * Returns the config object to set pararmeters 
+         * for stanford core nlp runtime setup
+         */
+        public getConfig() {
+            this.config = require('../config.json');
+            return this.config;
+        }        
+    }
 }

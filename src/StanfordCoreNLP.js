@@ -79,6 +79,15 @@ var spawn = require("child_process").spawn;
         return ServerStatus;
     })();
     StanfordCoreNLP.ServerStatus = ServerStatus;    
+    var Config = (function () {
+        function Config() { }
+        Config.prototype.getConfig = function () {
+            this.config = require('../config.json');
+            return this.config;
+        };
+        return Config;
+    })();
+    StanfordCoreNLP.Config = Config;    
 })(exports.StanfordCoreNLP || (exports.StanfordCoreNLP = {}));
 
 
