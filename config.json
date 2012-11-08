@@ -4,7 +4,7 @@
     "nlp" : {
         "name": "Stanford CoreNLP",
         "comment": "Supply a path if you want to start the NLP server, or a host:port if it is already running",
-        "path": "/Users/mhewett/tools/Stanford NLP Core/stanford-corenlp-2012-07-09/corenlp.sh",
+        "path": "/Users/hewett/tools/Stanford NLP Core/stanford-corenlp-2012-07-09/corenlp.sh",
         "host": "localhost",
         "port": "1234"
     },

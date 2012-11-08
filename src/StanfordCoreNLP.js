@@ -1,4 +1,5 @@
-var spawn = require("child_process").spawn;
+var osProcess = require("child_process");
+var path = require("path");
 (function (StanfordCoreNLP) {
     var Server = (function () {
         function Server(_host, _port, _config) {
@@ -31,17 +32,24 @@ var spawn = require("child_process").spawn;
                 console.log("The server is already stopped.");
                 return this.state;
             }
+            this.nlpProcess.kill();
             this.state = ServerState.STOPPED;
             this.startTime = null;
             console.log("The NLP server has been stopped.");
             return this.state;
         };
         Server.prototype.runNLP = function () {
+            if((!this.config) || (!this.config.nlp.path)) {
+                console.log("Please supply a configuration");
+                return;
+            }
             var myInstance = this;
-            this.nlpProcess = spawn("ls", [
-                "-ls", 
-                "/users"
-            ]);
+            var nlpProgram = this.config.nlp.path;
+            var nlpDir = path.dirname(nlpProgram);
+            console.log("Starting: ", nlpProgram);
+            this.nlpProcess = osProcess.execFile(nlpProgram, [], {
+                "cwd": nlpDir
+            });
             this.nlpProcess.stdout.on("data", function (data) {
                 console.log("stdout: " + data);
             });
@@ -49,7 +57,9 @@ var spawn = require("child_process").spawn;
                 console.log("stderr: " + data);
             });
             this.nlpProcess.on("exit", function (exitCode) {
-                myInstance.stop();
+                if(myInstance.state !== ServerState.STOPPED) {
+                    myInstance.stop();
+                }
             });
         };
         return Server;

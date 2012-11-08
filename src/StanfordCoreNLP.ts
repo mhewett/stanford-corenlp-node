@@ -9,7 +9,8 @@
 declare var require;
 
 // This is used to call out to the OS and run processes.
-var spawn = require("child_process").spawn;
+var osProcess = require("child_process");
+var path = require("path");
 
 export module StanfordCoreNLP {
   
@@ -90,7 +91,8 @@ export module StanfordCoreNLP {
             }
             
             // Stop the server here.
-            // ...
+            this.nlpProcess.kill();
+
             // if return code is good
             this.state = ServerState.STOPPED;
             this.startTime = null;
@@ -101,8 +103,18 @@ export module StanfordCoreNLP {
         }
         
         runNLP() {
+            if ((! this.config) || (! this.config.nlp.path)) {
+                console.log("Please supply a configuration");
+                return;
+            }
+            
             var myInstance = this;
-            this.nlpProcess = spawn("ls", ["-ls", "/users"]);
+            var nlpProgram = this.config.nlp.path;
+            var nlpDir = path.dirname(nlpProgram);
+            console.log("Starting: ", nlpProgram);
+            
+            this.nlpProcess = osProcess.execFile(nlpProgram, [],
+                {"cwd": nlpDir}); 
             this.nlpProcess.stdout.on("data", function(data) {
                 console.log("stdout: " + data);
             });
@@ -110,7 +122,9 @@ export module StanfordCoreNLP {
                 console.log("stderr: " + data);
             });
             this.nlpProcess.on("exit", function(exitCode) {
-                myInstance.stop();
+                if (myInstance.state !== ServerState.STOPPED) {
+                    myInstance.stop();
+                }
             });
         }
 
@@ -154,7 +168,7 @@ export module StanfordCoreNLP {
      */
     export class Config {
         
-        private config: string;
+        private config: any;
 
         /**
          * Returns the config object to set pararmeters 
