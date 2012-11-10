@@ -12,6 +12,8 @@ declare var require;
 var osProcess = require("child_process");
 var path = require("path");
 
+import nlpconfig = module("NLPConfig");
+
 export module StanfordCoreNLP {
   
     /**
@@ -32,21 +34,17 @@ export module StanfordCoreNLP {
      */
     export class Server {
 
-        private host: string;
-        private port: string;
         private state: string = ServerState.STOPPED;
         private startTime: Date = null;
-        private config: any;  // The configuration for this server
+        private configuration: nlpconfig.NLPConfig.Configuration;  // The configuration for this server
         private nlpProcess: any = null;
         
     
         /**
          * Constructs a new instance of a Stanford CoreNLP server.
          */
-        constructor(_host: string, _port: string, _config: any) {
-            this.host = _host;
-            this.port = _port;
-            this.config = _config;
+        constructor(_config: nlpconfig.NLPConfig.Configuration) {
+            this.configuration = _config;
         }
     
         /**
@@ -70,9 +68,12 @@ export module StanfordCoreNLP {
             }
             
             // Start the server here.
-            this.runNLP();
+            if (! this.runNLP()) {
+                console.log("Unable to start the NLP server.");
+                return;
+            }
 
-            // if return code is good
+            // if successful in starting...
             this.state = ServerState.STARTED;
             this.startTime = new Date();
             console.log("The NLP server has been started at " + this.startTime.toString());
@@ -91,7 +92,9 @@ export module StanfordCoreNLP {
             }
             
             // Stop the server here.
-            this.nlpProcess.kill();
+            if (this.nlpProcess) {
+                this.nlpProcess.kill();
+            }
 
             // if return code is good
             this.state = ServerState.STOPPED;
@@ -103,13 +106,13 @@ export module StanfordCoreNLP {
         }
         
         runNLP() {
-            if ((! this.config) || (! this.config.stanfordnlp.path)) {
-                console.log("Please supply a configuration");
-                return;
+            if ((! this.configuration) || (! this.configuration.getPath())) {
+                console.log("Please supply a configuration with an executable path");
+                return false;
             }
             
             var myInstance = this;
-            var nlpProgram = this.config.stanfordnlp.path;
+            var nlpProgram = this.configuration.getPath();
             var nlpDir = path.dirname(nlpProgram);
             console.log("Starting: ", nlpProgram);
             
@@ -126,6 +129,8 @@ export module StanfordCoreNLP {
                     myInstance.stop();
                 }
             });
+            
+            return true;
         }
 
     }

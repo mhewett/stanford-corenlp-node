@@ -1,7 +1,8 @@
 var nlplib = require("./StanfordCoreNLP")
-var config = new nlplib.StanfordCoreNLP.Config();
-console.log("Loaded ", config.getConfig().nlp.name, " config file.");
-var nlpServer = new nlplib.StanfordCoreNLP.Server("localhost", "5678", config.getConfig());
+var nlpconfig = require("./NLPConfig")
+var config = nlpconfig.NLPConfig.Configuration.readFromFile("../config.json");
+console.log("Loaded the ", config.getName(), " config file.");
+var nlpServer = new nlplib.StanfordCoreNLP.Server(config);
 console.log("NLP server status: ", nlpServer.getStatus().getState());
 nlpServer.start();
 setTimeout(function () {
