@@ -113,7 +113,7 @@ export module StanfordCoreNLP {
             
             var myInstance = this;
             var nlpProgram = this.configuration.getPath();
-            var propLocation = this.config.stanfordnlp.props;
+            var propLocation = this.configuration.getPropsPath();
             var nlpDir = path.dirname(nlpProgram);
             console.log("Starting: ", nlpProgram);
             
