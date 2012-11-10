@@ -1,14 +1,13 @@
 var osProcess = require("child_process");
 var path = require("path");
+
 (function (StanfordCoreNLP) {
     var Server = (function () {
-        function Server(_host, _port, _config) {
+        function Server(_config) {
             this.state = ServerState.STOPPED;
             this.startTime = null;
             this.nlpProcess = null;
-            this.host = _host;
-            this.port = _port;
-            this.config = _config;
+            this.configuration = _config;
         }
         Server.prototype.getStatus = function () {
             var status = new ServerStatus();
@@ -21,7 +20,10 @@ var path = require("path");
                 console.log("The server was already started at " + this.startTime.toString());
                 return this.state;
             }
-            this.runNLP();
+            if(!this.runNLP()) {
+                console.log("Unable to start the NLP server.");
+                return;
+            }
             this.state = ServerState.STARTED;
             this.startTime = new Date();
             console.log("The NLP server has been started at " + this.startTime.toString());
@@ -32,19 +34,21 @@ var path = require("path");
                 console.log("The server is already stopped.");
                 return this.state;
             }
-            this.nlpProcess.kill();
+            if(this.nlpProcess) {
+                this.nlpProcess.kill();
+            }
             this.state = ServerState.STOPPED;
             this.startTime = null;
             console.log("The NLP server has been stopped.");
             return this.state;
         };
         Server.prototype.runNLP = function () {
-            if((!this.config) || (!this.config.stanfordnlp.path)) {
-                console.log("Please supply a configuration");
-                return;
+            if((!this.configuration) || (!this.configuration.getPath())) {
+                console.log("Please supply a configuration with an executable path");
+                return false;
             }
             var myInstance = this;
-            var nlpProgram = this.config.stanfordnlp.path;
+            var nlpProgram = this.configuration.getPath();
             var nlpDir = path.dirname(nlpProgram);
             console.log("Starting: ", nlpProgram);
             this.nlpProcess = osProcess.execFile(nlpProgram, [], {
@@ -61,6 +65,7 @@ var path = require("path");
                     myInstance.stop();
                 }
             });
+            return true;
         };
         return Server;
     })();

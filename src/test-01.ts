@@ -1,12 +1,11 @@
 
 import nlplib = module("StanfordCoreNLP");
+import nlpconfig = module("NLPConfig");
 
-var config = new nlplib.StanfordCoreNLP.Config();
+var config = nlpconfig.NLPConfig.Configuration.readFromFile("../config.json");
+console.log("Loaded the ", config.getName(), " config file.");
 
-//console.log("config", config.getConfig());
-console.log("Loaded ", config.getConfig().nlp.name, " config file.");
-
-var nlpServer = new nlplib.StanfordCoreNLP.Server("localhost", "5678", config.getConfig());
+var nlpServer = new nlplib.StanfordCoreNLP.Server(config);
 
 console.log("NLP server status: ", nlpServer.getStatus().getState());
 nlpServer.start();

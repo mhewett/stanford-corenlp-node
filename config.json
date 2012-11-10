@@ -1,12 +1,10 @@
 {
     "comment": "Sample config file for stanford-corenlp-node",
     
-    "stanfordnlp" : {
-        "name": "Stanford CoreNLP",
-        "comment": "Supply a path if you want to start the NLP server, or a host:port if it is already running",
-        "path": "/Users/hewett/tools/Stanford NLP Core/stanford-corenlp-2012-07-09/corenlp.sh",
-        "host": "localhost",
-        "port": "1234",
-        "props": "/Users/shamod/projects/git/stanford-corenlp-node/src/StanfordCoreNLP.properties"
-    }
+    "name": "Stanford CoreNLP",
+    "comment": "Supply a path if you want to start the NLP server, or a host:port if it is already running",
+    "path": "/Users/hewett/tools/Stanford NLP Core/stanford-corenlp-2012-07-09/corenlp.sh",
+    "host": "localhost",
+    "port": "1234",
+    "props": "/Users/shamod/projects/git/stanford-corenlp-node/src/StanfordCoreNLP.properties"
 }
