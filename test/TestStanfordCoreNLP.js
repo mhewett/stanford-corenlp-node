@@ -12,23 +12,8 @@ var expect = require('chai').expect;
 
 // import StanfordCoreNLP module	
 var nlplib = require('../src/StanfordCoreNLP');
-
-/**
- * test to check the Config functions
- */
-describe('Config', function(){
- 	var config;
-  	
-  	before(function(){
-      config = new nlplib.StanfordCoreNLP.Config();
-  	});
-
-	describe('test if the config file returns name', function(){
-	  it('expected to match the name', function(){
-	  	expect(config.getConfig().nlp.name).to.equal('Stanford CoreNLP');
-	  });
-	});
-});
+// import NLPConfig module	
+var nlpconfig = require('../src/NLPConfig');
 
 /**
  * test to check the Server functions
@@ -36,7 +21,7 @@ describe('Config', function(){
 describe('Server', function(){
 	var config, server;
 	before(function(){
-		config = new nlplib.StanfordCoreNLP.Config();
+		config = new nlpconfig.NLPConfig.Config();
 		server = new nlplib.StanfordCoreNLP.Server("localhost", "5678", config.getConfig());
 	});
 

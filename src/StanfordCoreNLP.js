@@ -39,12 +39,12 @@ var path = require("path");
             return this.state;
         };
         Server.prototype.runNLP = function () {
-            if((!this.config) || (!this.config.nlp.path)) {
+            if((!this.config) || (!this.config.stanfordnlp.path)) {
                 console.log("Please supply a configuration");
                 return;
             }
             var myInstance = this;
-            var nlpProgram = this.config.nlp.path;
+            var nlpProgram = this.config.stanfordnlp.path;
             var nlpDir = path.dirname(nlpProgram);
             console.log("Starting: ", nlpProgram);
             this.nlpProcess = osProcess.execFile(nlpProgram, [], {
@@ -89,15 +89,6 @@ var path = require("path");
         return ServerStatus;
     })();
     StanfordCoreNLP.ServerStatus = ServerStatus;    
-    var Config = (function () {
-        function Config() { }
-        Config.prototype.getConfig = function () {
-            this.config = require('../config.json');
-            return this.config;
-        };
-        return Config;
-    })();
-    StanfordCoreNLP.Config = Config;    
 })(exports.StanfordCoreNLP || (exports.StanfordCoreNLP = {}));
 
 

@@ -103,13 +103,13 @@ export module StanfordCoreNLP {
         }
         
         runNLP() {
-            if ((! this.config) || (! this.config.nlp.path)) {
+            if ((! this.config) || (! this.config.stanfordnlp.path)) {
                 console.log("Please supply a configuration");
                 return;
             }
             
             var myInstance = this;
-            var nlpProgram = this.config.nlp.path;
+            var nlpProgram = this.config.stanfordnlp.path;
             var nlpDir = path.dirname(nlpProgram);
             console.log("Starting: ", nlpProgram);
             
@@ -161,22 +161,5 @@ export module StanfordCoreNLP {
         public getStartTime() {
             return this.startTime;
         }
-    }
-
-    /**
-     * This class retrieves the config object for the NLP Server.
-     */
-    export class Config {
-        
-        private config: any;
-
-        /**
-         * Returns the config object to set pararmeters 
-         * for stanford core nlp runtime setup
-         */
-        public getConfig() {
-            this.config = require('../config.json');
-            return this.config;
-        }        
     }
 }
