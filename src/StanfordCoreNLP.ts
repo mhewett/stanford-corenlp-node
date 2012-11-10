@@ -110,11 +110,12 @@ export module StanfordCoreNLP {
             
             var myInstance = this;
             var nlpProgram = this.config.stanfordnlp.path;
+            var propLocation = this.config.stanfordnlp.props;
             var nlpDir = path.dirname(nlpProgram);
             console.log("Starting: ", nlpProgram);
             
-            this.nlpProcess = osProcess.execFile(nlpProgram, [],
-                {"cwd": nlpDir}); 
+            this.nlpProcess = osProcess.execFile(nlpProgram, ['-props', propLocation],
+                {"cwd": nlpDir});
             this.nlpProcess.stdout.on("data", function(data) {
                 console.log("stdout: " + data);
             });
