@@ -1,3 +1,6 @@
+/*
+ * This program tests the start and stop features of the StanfordCoreNLP node library.
+ */
 
 import nlplib = module("StanfordCoreNLP");
 import nlpconfig = module("NLPConfig");
