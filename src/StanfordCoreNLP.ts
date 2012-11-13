@@ -11,6 +11,8 @@ declare var require;
 // This is used to call out to the OS and run processes.
 var osProcess = require("child_process");
 var path = require("path");
+var net = require("net");
+
 
 import nlpconfig = module("NLPConfig");
 
@@ -38,6 +40,7 @@ export module StanfordCoreNLP {
         private startTime: Date = null;
         private configuration: nlpconfig.NLPConfig.Configuration;  // The configuration for this server
         private nlpProcess: any = null;
+        private client: any = null;
         
     
         /**
@@ -58,6 +61,14 @@ export module StanfordCoreNLP {
             return status;
         }
         
+        /**
+         * Process text
+         */
+        public process(text: string) {
+            console.log("Sending string to NLP: ", text);
+            this.client.write(text + "\n");
+        }
+             
         /**
          * Start the NLP server, if it is not already started.
          */
@@ -81,7 +92,7 @@ export module StanfordCoreNLP {
             
             // else, show an error message
         }
-        
+
         /**
          * Stop the NLP server, if it is not already stopped.
          */
@@ -104,7 +115,22 @@ export module StanfordCoreNLP {
             
             // else, show an error message
         }
-        
+
+        startClient(me: Server) {
+            if (! me.client) {
+                me.client = net.connect({port: me.configuration.getPort()},
+                    function() {
+                        console.log("NLP client started.");
+                        });
+                me.client.on('data', function(data) {
+                    console.log(data.toString());
+                });
+                me.client.on('end', function() {
+                    console.log('NLP client disconnected.');
+                });
+            }
+        }
+                
         runNLP() {
             if ((! this.configuration) || (! this.configuration.getPath())) {
                 console.log("Please supply a configuration with an executable path");
@@ -113,12 +139,20 @@ export module StanfordCoreNLP {
             
             var myInstance = this;
             var nlpProgram = this.configuration.getPath();
-            var propLocation = this.configuration.getPropsPath();
-            var nlpDir = path.dirname(nlpProgram);
+            var nlpDir = this.configuration.getNlpLibDir();
+            var propsLocation = this.configuration.getPropsPath();
             console.log("Starting: ", nlpProgram);
             
-            this.nlpProcess = osProcess.execFile(nlpProgram, ['-props', propLocation],
-                {"cwd": nlpDir});
+            // Set up the arguments.
+            var args = [nlpDir];
+            if (propsLocation) {
+                args.push('-props');
+                args.push(propsLocation);
+            }
+
+            // Start the program            
+            this.nlpProcess = osProcess.execFile(nlpProgram, args, {});      // {"cwd": nlpDir});
+            
             this.nlpProcess.stdout.on("data", function(data) {
                 console.log("stdout: " + data);
             });
@@ -130,7 +164,12 @@ export module StanfordCoreNLP {
                     myInstance.stop();
                 }
             });
-            
+        
+            // Open a client after waiting for 25 seconds for the NLP server to start
+            var me = this;    
+            setTimeout(function() {
+                me.startClient(me);
+                }, 25000);
             return true;
         }
 

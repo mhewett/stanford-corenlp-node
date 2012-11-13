@@ -25,6 +25,13 @@ var path = require("path");
             this.description = newValue;
             return this;
         };
+        Configuration.prototype.getNlpLibDir = function () {
+            return this.nlpLibDir;
+        };
+        Configuration.prototype.setNlpLibDir = function (newValue) {
+            this.nlpLibDir = newValue;
+            return this;
+        };
         Configuration.prototype.getPath = function () {
             return this.path;
         };

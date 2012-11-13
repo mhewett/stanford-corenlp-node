@@ -1,5 +1,6 @@
 var osProcess = require("child_process");
 var path = require("path");
+var net = require("net");
 
 (function (StanfordCoreNLP) {
     var Server = (function () {
@@ -7,6 +8,7 @@ var path = require("path");
             this.state = ServerState.STOPPED;
             this.startTime = null;
             this.nlpProcess = null;
+            this.client = null;
             this.configuration = _config;
         }
         Server.prototype.getStatus = function () {
@@ -14,6 +16,10 @@ var path = require("path");
             status.setState(this.state);
             status.setStartTime(this.startTime);
             return status;
+        };
+        Server.prototype.process = function (text) {
+            console.log("Sending string to NLP: ", text);
+            this.client.write(text + "\n");
         };
         Server.prototype.start = function () {
             if(this.state === ServerState.STARTED) {
@@ -42,6 +48,21 @@ var path = require("path");
             console.log("The NLP server has been stopped.");
             return this.state;
         };
+        Server.prototype.startClient = function (me) {
+            if(!me.client) {
+                me.client = net.connect({
+                    port: me.configuration.getPort()
+                }, function () {
+                    console.log("NLP client started.");
+                });
+                me.client.on('data', function (data) {
+                    console.log(data.toString());
+                });
+                me.client.on('end', function () {
+                    console.log('NLP client disconnected.');
+                });
+            }
+        };
         Server.prototype.runNLP = function () {
             if((!this.configuration) || (!this.configuration.getPath())) {
                 console.log("Please supply a configuration with an executable path");
@@ -49,10 +70,17 @@ var path = require("path");
             }
             var myInstance = this;
             var nlpProgram = this.configuration.getPath();
-            var nlpDir = path.dirname(nlpProgram);
+            var nlpDir = this.configuration.getNlpLibDir();
+            var propsLocation = this.configuration.getPropsPath();
             console.log("Starting: ", nlpProgram);
-            this.nlpProcess = osProcess.execFile(nlpProgram, [], {
-                "cwd": nlpDir
+            var args = [
+                nlpDir
+            ];
+            if(propsLocation) {
+                args.push('-props');
+                args.push(propsLocation);
+            }
+            this.nlpProcess = osProcess.execFile(nlpProgram, args, {
             });
             this.nlpProcess.stdout.on("data", function (data) {
                 console.log("stdout: " + data);
@@ -65,6 +93,10 @@ var path = require("path");
                     myInstance.stop();
                 }
             });
+            var me = this;
+            setTimeout(function () {
+                me.startClient(me);
+            }, 25000);
             return true;
         };
         return Server;

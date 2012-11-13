@@ -22,6 +22,7 @@ export module NLPConfig {
         private name: string;       //"Stanford CoreNLP",
         private description: string; 
         private path: string;       // The path to the executable program.
+        private nlpLibDir: string;     // Folder containing NLP library
         private host: string;       // "localhost"
         private port: string;       // "1234",
         private propsPath: string;  // Path to the properties file.
@@ -56,6 +57,17 @@ export module NLPConfig {
         /** Setter */
         public setDescription(newValue: string) {
             this.description = newValue; 
+            return this;
+        }
+
+        /** Getter */
+        public getNlpLibDir() { 
+            return this.nlpLibDir;
+        }
+
+        /** Setter */
+        public setNlpLibDir(newValue: string) {
+            this.nlpLibDir = newValue; 
             return this;
         }
 
