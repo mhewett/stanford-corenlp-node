@@ -20,12 +20,12 @@ describe('Config', function(){
  	var config;
   	
   	before(function(){
-      config = new nlpconfig.NLPConfig.Config();
+      config = nlpconfig.NLPConfig.Configuration.readFromFile('./config.json');
   	});
 
 	describe('test if the config file returns name', function(){
 	  it('expected to match the name', function(){
-	  	expect(config.getConfig().stanfordnlp.name).to.equal('Stanford CoreNLP');
+	  	expect(config.getName()).to.equal('Stanford CoreNLP');
 	  });
 	});
 });
