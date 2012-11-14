@@ -9,6 +9,8 @@ var net = require("net");
             this.startTime = null;
             this.nlpProcess = null;
             this.client = null;
+            this.replyCallback = null;
+            this.replyBuffer = "";
             this.configuration = _config;
         }
         Server.prototype.getStatus = function () {
@@ -17,16 +19,21 @@ var net = require("net");
             status.setStartTime(this.startTime);
             return status;
         };
-        Server.prototype.process = function (text) {
+        Server.prototype.process = function (text, callback) {
+            this.replyBuffer = "";
+            this.replyCallback = callback;
             console.log("Sending string to NLP: ", text);
             this.client.write(text + "\n");
         };
-        Server.prototype.start = function () {
+        Server.prototype.reply = function (text) {
+            this.replyCallback(text);
+        };
+        Server.prototype.start = function (callback) {
             if(this.state === ServerState.STARTED) {
                 console.log("The server was already started at " + this.startTime.toString());
                 return this.state;
             }
-            if(!this.runNLP()) {
+            if(!this.runNLP(callback)) {
                 console.log("Unable to start the NLP server.");
                 return;
             }
@@ -40,6 +47,9 @@ var net = require("net");
                 console.log("The server is already stopped.");
                 return this.state;
             }
+            if(this.client) {
+                this.client.end();
+            }
             if(this.nlpProcess) {
                 this.nlpProcess.kill();
             }
@@ -48,12 +58,13 @@ var net = require("net");
             console.log("The NLP server has been stopped.");
             return this.state;
         };
-        Server.prototype.startClient = function (me) {
+        Server.prototype.startClient = function (me, callback) {
             if(!me.client) {
                 me.client = net.connect({
                     port: me.configuration.getPort()
                 }, function () {
                     console.log("NLP client started.");
+                    callback();
                 });
                 me.client.on('data', function (data) {
                     console.log(data.toString());
@@ -63,7 +74,7 @@ var net = require("net");
                 });
             }
         };
-        Server.prototype.runNLP = function () {
+        Server.prototype.runNLP = function (callback) {
             if((!this.configuration) || (!this.configuration.getPath())) {
                 console.log("Please supply a configuration with an executable path");
                 return false;
@@ -83,20 +94,23 @@ var net = require("net");
             this.nlpProcess = osProcess.execFile(nlpProgram, args, {
             });
             this.nlpProcess.stdout.on("data", function (data) {
-                console.log("stdout: " + data);
+                console.log(data);
+                myInstance.replyBuffer += data;
+                if(data.match("listening on port")) {
+                    myInstance.startClient(myInstance, callback);
+                }
+                if(data.match("processed") && data.match("bytes")) {
+                    myInstance.reply(myInstance.replyBuffer);
+                }
             });
             this.nlpProcess.stderr.on("data", function (data) {
-                console.log("stderr: " + data);
+                console.log("stderr: ", data);
             });
             this.nlpProcess.on("exit", function (exitCode) {
                 if(myInstance.state !== ServerState.STOPPED) {
                     myInstance.stop();
                 }
             });
-            var me = this;
-            setTimeout(function () {
-                me.startClient(me);
-            }, 25000);
             return true;
         };
         return Server;

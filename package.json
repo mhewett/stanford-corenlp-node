@@ -14,7 +14,8 @@
   "scripts": {},
   "dependencies": {
     "express": "~3.0",
-    "typescript": "~0.8"    
+    "minpubsub": "~0.x",
+    "typescript": "~0.8"
   },
   "devDependencies": {
     "mocha": "~1.7.0",

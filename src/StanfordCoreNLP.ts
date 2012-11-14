@@ -41,6 +41,8 @@ export module StanfordCoreNLP {
         private configuration: nlpconfig.NLPConfig.Configuration;  // The configuration for this server
         private nlpProcess: any = null;
         private client: any = null;
+        private replyCallback : any = null;
+        private replyBuffer : string = "";
         
     
         /**
@@ -60,26 +62,40 @@ export module StanfordCoreNLP {
             status.setStartTime(this.startTime);
             return status;
         }
-        
+
         /**
-         * Process text
+         * Process text.
+         * The callback takes one argument, the result.
+         * 
          */
-        public process(text: string) {
+        public process(text: string, callback) {
+            this.replyBuffer = "";
+            this.replyCallback = callback;
             console.log("Sending string to NLP: ", text);
             this.client.write(text + "\n");
         }
-             
+        
+        /**
+         * Reply to the process() call.
+         * This is not right yet.
+         * It's not safe for multiple concurrent calls.
+         */
+        public reply(text: string) {
+            this.replyCallback(text);
+        }
+
         /**
          * Start the NLP server, if it is not already started.
+         * callback has no arguments.  It is called when the server is ready.
          */
-        public start() {
+        public start(callback) {
             if (this.state === ServerState.STARTED) {
                 console.log("The server was already started at " + this.startTime.toString());
                 return this.state;
             }
             
             // Start the server here.
-            if (! this.runNLP()) {
+            if (! this.runNLP(callback)) {
                 console.log("Unable to start the NLP server.");
                 return;
             }
@@ -102,7 +118,12 @@ export module StanfordCoreNLP {
                 return this.state;
             }
             
-            // Stop the server here.
+            // Close the socket
+            if (this.client) {
+                this.client.end();
+            }
+            
+            // Stop the server
             if (this.nlpProcess) {
                 this.nlpProcess.kill();
             }
@@ -116,11 +137,16 @@ export module StanfordCoreNLP {
             // else, show an error message
         }
 
-        startClient(me: Server) {
+        /**
+         * Contact the NLP server on a socket.
+         * The callback does not take any arguments and should be called when the client is ready.
+         */
+        startClient(me: Server, callback : any) {
             if (! me.client) {
                 me.client = net.connect({port: me.configuration.getPort()},
                     function() {
                         console.log("NLP client started.");
+                        callback();
                         });
                 me.client.on('data', function(data) {
                     console.log(data.toString());
@@ -131,7 +157,7 @@ export module StanfordCoreNLP {
             }
         }
                 
-        runNLP() {
+        runNLP(callback) {
             if ((! this.configuration) || (! this.configuration.getPath())) {
                 console.log("Please supply a configuration with an executable path");
                 return false;
@@ -154,22 +180,24 @@ export module StanfordCoreNLP {
             this.nlpProcess = osProcess.execFile(nlpProgram, args, {});      // {"cwd": nlpDir});
             
             this.nlpProcess.stdout.on("data", function(data) {
-                console.log("stdout: " + data);
+                console.log(data);
+                myInstance.replyBuffer += data;
+                if (data.match("listening on port")) {
+                    myInstance.startClient(myInstance, callback);
+                }
+                if (data.match("processed") && data.match("bytes")) {
+                    myInstance.reply(myInstance.replyBuffer);
+                }
             });
             this.nlpProcess.stderr.on("data", function(data) {
-                console.log("stderr: " + data);
+                console.log("stderr: ", data);
             });
             this.nlpProcess.on("exit", function(exitCode) {
                 if (myInstance.state !== ServerState.STOPPED) {
                     myInstance.stop();
                 }
             });
-        
-            // Open a client after waiting for 25 seconds for the NLP server to start
-            var me = this;    
-            setTimeout(function() {
-                me.startClient(me);
-                }, 25000);
+
             return true;
         }
 
