@@ -21,8 +21,8 @@ var nlpconfig = require('../src/NLPConfig');
 describe('Server', function(){
 	var config, server;
 	before(function(){
-		config = new nlpconfig.NLPConfig.Config();
-		server = new nlplib.StanfordCoreNLP.Server("localhost", "5678", config.getConfig());
+		config = nlpconfig.NLPConfig.Configuration.readFromFile('./config.json');;  // The configuration for this server
+		server = new nlplib.StanfordCoreNLP.Server(config);
 	});
 
 	describe('test if the server exists', function() {
