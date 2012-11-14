@@ -9,6 +9,7 @@ lib-cov
 .project
 .DS_STORE
 
+.settings
 pids
 logs
 results
