@@ -16,6 +16,7 @@
     "express": "~3.0",
     "minpubsub": "~0.x",
     "typescript": "~0.8",
+    "xml2json": "~0.3",
     "grunt-typescript": "0.0.4",
     "grunt-mocha-test": "0.0.1"
   },
