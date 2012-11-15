@@ -1,6 +1,8 @@
+var fs = require("fs");
+var net = require("net");
 var osProcess = require("child_process");
 var path = require("path");
-var net = require("net");
+var xml2json = require("xml2json");
 
 (function (StanfordCoreNLP) {
     var Server = (function () {
@@ -26,7 +28,19 @@ var net = require("net");
             this.client.write(text + "\n");
         };
         Server.prototype.reply = function (text) {
-            this.replyCallback(text);
+            this.replyBuffer = "";
+            var replyText = text;
+            if(this.configuration.getOutputFormat() === "json") {
+                try  {
+                    replyText = xml2json.toJson(text);
+                } catch (ex) {
+                    console.log(ex);
+                    console.log("========================================");
+                    console.log(text);
+                    console.log("========================================");
+                }
+            }
+            this.replyCallback(replyText);
         };
         Server.prototype.start = function (callback) {
             if(this.state === ServerState.STARTED) {
@@ -67,7 +81,10 @@ var net = require("net");
                     callback();
                 });
                 me.client.on('data', function (data) {
-                    console.log(data.toString());
+                    me.replyBuffer += data.toString();
+                    if(me.replyBuffer.match("</root>")) {
+                        me.reply(me.replyBuffer);
+                    }
                 });
                 me.client.on('end', function () {
                     console.log('NLP client disconnected.');
@@ -87,20 +104,13 @@ var net = require("net");
             var args = [
                 nlpDir
             ];
-            if(propsLocation) {
-                args.push('-props');
-                args.push(propsLocation);
+            if(propsLocation && fs.existsSync(propsLocation)) {
             }
             this.nlpProcess = osProcess.execFile(nlpProgram, args, {
             });
             this.nlpProcess.stdout.on("data", function (data) {
-                console.log(data);
-                myInstance.replyBuffer += data;
                 if(data.match("listening on port")) {
                     myInstance.startClient(myInstance, callback);
-                }
-                if(data.match("processed") && data.match("bytes")) {
-                    myInstance.reply(myInstance.replyBuffer);
                 }
             });
             this.nlpProcess.stderr.on("data", function (data) {

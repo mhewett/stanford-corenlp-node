@@ -7,11 +7,15 @@
  */
 
 declare var require;
+declare var __dirname;
 
 // This is used to call out to the OS and run processes.
+var fs = require("fs");
+var net = require("net");
 var osProcess = require("child_process");
 var path = require("path");
-var net = require("net");
+var xml2json = require("xml2json");
+
 
 
 import nlpconfig = module("NLPConfig");
@@ -81,7 +85,20 @@ export module StanfordCoreNLP {
          * It's not safe for multiple concurrent calls.
          */
         public reply(text: string) {
-            this.replyCallback(text);
+            this.replyBuffer = "";
+            // Convert XML to JSON
+            var replyText = text;
+            if (this.configuration.getOutputFormat() === "json") {
+                try {
+                    replyText = xml2json.toJson(text);
+                } catch (ex) {
+                    console.log(ex);
+                    console.log("========================================");
+                    console.log(text);
+                    console.log("========================================");
+                }
+            }
+            this.replyCallback(replyText);
         }
 
         /**
@@ -149,7 +166,10 @@ export module StanfordCoreNLP {
                         callback();
                         });
                 me.client.on('data', function(data) {
-                    console.log(data.toString());
+                    me.replyBuffer += data.toString();
+                    if (me.replyBuffer.match("</root>")) {
+                        me.reply(me.replyBuffer);
+                    }
                 });
                 me.client.on('end', function() {
                     console.log('NLP client disconnected.');
@@ -171,22 +191,18 @@ export module StanfordCoreNLP {
             
             // Set up the arguments.
             var args = [nlpDir];
-            if (propsLocation) {
-                args.push('-props');
-                args.push(propsLocation);
+            if (propsLocation && fs.existsSync(propsLocation)) {
+                // args.push('-props');
+                // args.push("file://" + path.resolve(__dirname, propsLocation));
             }
 
             // Start the program            
             this.nlpProcess = osProcess.execFile(nlpProgram, args, {});      // {"cwd": nlpDir});
             
             this.nlpProcess.stdout.on("data", function(data) {
-                console.log(data);
-                myInstance.replyBuffer += data;
+                //console.log(data);
                 if (data.match("listening on port")) {
                     myInstance.startClient(myInstance, callback);
-                }
-                if (data.match("processed") && data.match("bytes")) {
-                    myInstance.reply(myInstance.replyBuffer);
                 }
             });
             this.nlpProcess.stderr.on("data", function(data) {

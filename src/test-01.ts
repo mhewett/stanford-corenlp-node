@@ -37,7 +37,7 @@ var testNLP = function() {
     if (testString) {
         nlpServer.process(testString,
            function(result) {
-               console.log(result);
+               console.log(JSON.stringify(JSON.parse(result), null, "  "));
                events.publish(SERVER_AVAILABLE, testNLP);
            });
     }

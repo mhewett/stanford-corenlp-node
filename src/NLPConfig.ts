@@ -26,6 +26,7 @@ export module NLPConfig {
         private host: string;       // "localhost"
         private port: string;       // "1234",
         private propsPath: string;  // Path to the properties file.
+        private outputFormat: string = "json";  // "xml" or "json"
 
         /** Getter */
         public getId() { 
@@ -68,6 +69,17 @@ export module NLPConfig {
         /** Setter */
         public setNlpLibDir(newValue: string) {
             this.nlpLibDir = newValue; 
+            return this;
+        }
+
+        /** Getter */
+        public getOutputFormat() { 
+            return this.outputFormat;
+        }
+
+        /** Setter */
+        public setOutputFormat(newValue: string) {
+            this.outputFormat = newValue; 
             return this;
         }
 
