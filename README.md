@@ -10,3 +10,11 @@ Notes
   - We intend to provide a full interface to a local instance of the Stanford CoreNLP system.
   - We welcome contributions of existing implementations that you are no longer developing.
   - We welcome input on the web service interface design.
+
+Update: 15 Nov 2012
+===================
+  - The package is nearing alpha stage.
+  - We have a wrapper around the Stanford CoreNLP library that turns it into a server.
+  - We have a Node.js package that talks to the server.
+  - Configuration files define the NLP options.
+  - We are working on the data return format.
