@@ -6,5 +6,7 @@
     "path": "./corenlp-server.sh",
     "nlpLibDir": "/Users/hewett/tools/Stanford-NLP-Core/stanford-corenlp-2012-07-09",
     "host": "localhost",
-    "port": "9900"
+    "port": "9900",
+    "propsPath": "./StanfordCoreNLP.properties",
+    "outputFormat": "json"
 }
