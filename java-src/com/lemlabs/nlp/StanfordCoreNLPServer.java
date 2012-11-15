@@ -49,6 +49,8 @@ public class StanfordCoreNLPServer
    */
   public static void main(String[] args)
   {
+    System.out.println("Server wrapper for Stanford CoreNLP library.   LEM Labs, Inc.  Nov. 2012");
+    
     // parseArguments will exit if there is an error
     parseArguments(args);
     
@@ -85,6 +87,7 @@ public class StanfordCoreNLPServer
     //
     // construct the pipeline
     //
+    System.out.println("Creating the NLP pipeline");
     StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
     props = pipeline.getProperties();
     //long setupTime = tim.report();
@@ -132,7 +135,8 @@ public class StanfordCoreNLPServer
       {
         if (inline.length() > 0) {
           Annotation anno = pipeline.process(inline);
-          pipeline.prettyPrint(anno, clientOut);
+          //pipeline.prettyPrint(anno, clientOut);
+          pipeline.xmlPrint(anno, clientOut);
           System.out.println("processed " + inline.length() + " bytes.");
         }
         else
@@ -328,9 +332,10 @@ public class StanfordCoreNLPServer
           fatal("Error: the -nlpdir option requires a pathname argument");
       }
       
+      /*  Allow other arguments, to pass on to the CoreNLP pipeline. 
       else
         fatal("Invalid argument: " + args[index]);
-        
+      */
     }
   }
 

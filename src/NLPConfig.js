@@ -3,7 +3,9 @@ var osProcess = require("child_process");
 var path = require("path");
 (function (NLPConfig) {
     var Configuration = (function () {
-        function Configuration() { }
+        function Configuration() {
+            this.outputFormat = "json";
+        }
         Configuration.prototype.getId = function () {
             return this.id;
         };
@@ -30,6 +32,13 @@ var path = require("path");
         };
         Configuration.prototype.setNlpLibDir = function (newValue) {
             this.nlpLibDir = newValue;
+            return this;
+        };
+        Configuration.prototype.getOutputFormat = function () {
+            return this.outputFormat;
+        };
+        Configuration.prototype.setOutputFormat = function (newValue) {
+            this.outputFormat = newValue;
             return this;
         };
         Configuration.prototype.getPath = function () {
