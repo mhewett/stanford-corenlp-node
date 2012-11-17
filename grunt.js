@@ -4,7 +4,7 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: '<json:package.json>',    
     lint: {
-      files: ['grunt.js', 'src/**/*.js', 'test/**/*.js']
+      files: ['grunt.js', 'src/**/*.ts', 'test/**/*.ts']
     },
     watch: {
       files: '<config:lint.files>',
@@ -35,7 +35,8 @@ module.exports = function(grunt) {
         options: {
           module: 'commonjs', //or amd
           target: 'es5', //or es3
-          base_path: 'src'
+          base_path: 'src',
+          sourcemap: 'true'
         }
       }
     },
