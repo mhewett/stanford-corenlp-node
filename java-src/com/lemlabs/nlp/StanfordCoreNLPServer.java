@@ -1,14 +1,18 @@
 package com.lemlabs.nlp;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import edu.stanford.nlp.pipeline.Annotation;
@@ -39,6 +43,14 @@ public class StanfordCoreNLPServer
   private static String port = DEFAULT_PORT;
   private static String nlpDir = DEFAULT_NLP_DIR;
   
+  // These are from StringUtils in the Stanford CoreNLP package.
+  private static final String PROP = "-prop";
+  private static final String PROPS = "-props";
+  private static final String PROPERTIES = "-properties";
+  private static final String ARGS = "-args";
+  private static final String ARGUMENTS = "-arguments";
+
+  
   /**
    * Start the server.
    * 
@@ -58,22 +70,81 @@ public class StanfordCoreNLPServer
 
     //
     // process the arguments
+    String[] commandLineArgs = args;  // So we can assign the array later;
+    Properties props = new Properties();
+    
+    // We need to process the -props argument ourselves because the Stanford CoreNLP program
+    // has a bug where it gets into an infinite loop when loading the properties.
+    List<String> argsList = Arrays.asList(args);
+    if (argsList.contains(PROP) || argsList.contains(PROPS) || argsList.contains(PROPERTIES) || argsList.contains(ARGUMENTS) || argsList.contains(ARGS))
+    {
+      // Figure out the actual arg
+      int propIndex = -1;
+      String propFile = null;
+      for (int i=0; i < args.length; ++i)
+      {
+        if (args[i].equals(PROP) || args[i].equals(PROPS) || args[i].equals(PROPERTIES) || args[i].equals(ARGUMENTS) || args[i].equals(ARGS))
+        {
+          propIndex = i;
+          break;
+        }
+      }
+      
+      // Did we find the -props argument?
+      if (propIndex >= 0)
+      {
+        if (propIndex < args.length-1)
+        {
+          propFile = args[propIndex+1];  // Save the filename
+          argsList.remove(propIndex+1);  // Remove the argument
+          argsList.remove(propIndex);    // remove the file
+        }
+        else
+        {
+          fatal("The " + args[propIndex] + " argument requires a filename for a value");
+        }
+
+        // Load the properties file
+        if ((new File(propFile)).canRead())
+        {
+          try {
+            System.out.println("Reading properties file: " + propFile);
+            InputStream is = new BufferedInputStream(new FileInputStream(propFile));
+            props.load(is);
+          } catch (IOException ex) {
+            ex.printStackTrace();
+            fatal("Error reading properties file (" + propFile + "): " + ex.getMessage());
+          }
+        }
+        else
+        {
+          fatal("Unable to read the properties file: " + propFile);
+        }
+        
+        // Reset the args to the new list
+        commandLineArgs = argsList.toArray(new String[0]);
+      }
+    }
+    
     //
     // extract all the properties from the command line
     // if cmd line is empty, set the props to null. The processor will search for the properties file in the classpath
-    Properties props = null;
+    Properties allProps = new Properties();
+    
     if(args.length > 0){
-      props = StringUtils.argsToProperties(args);
-      boolean hasH = props.containsKey("h");
-      boolean hasHelp = props.containsKey("help");
+      allProps = StringUtils.argsToProperties(commandLineArgs);
+      allProps.putAll(props);
+      boolean hasH = allProps.containsKey("h");
+      boolean hasHelp = allProps.containsKey("help");
       if (hasH || hasHelp) {
-        String helpValue = hasH ? props.getProperty("h") : props.getProperty("help");
+        String helpValue = hasH ? allProps.getProperty("h") : allProps.getProperty("help");
         printHelp(System.err, helpValue);
         return;
       }
     }
+    
     // multithreading thread count
-    String numThreadsString = (props == null) ? null : props.getProperty("threads");
+    String numThreadsString = allProps.getProperty("threads");
     @SuppressWarnings("unused")
     int numThreads = 1;
     try{
@@ -88,7 +159,7 @@ public class StanfordCoreNLPServer
     // construct the pipeline
     //
     System.out.println("Creating the NLP pipeline");
-    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+    StanfordCoreNLP pipeline = new StanfordCoreNLP(allProps);
     props = pipeline.getProperties();
     //long setupTime = tim.report();
 
@@ -113,7 +184,7 @@ public class StanfordCoreNLPServer
    * @throws IOException If there is an IO problem
    */
   private static void openSocket(StanfordCoreNLP pipeline) throws IOException {
-    String encoding = Charset.defaultCharset().name();  //   pipeline.properties.getProperty("encoding");
+    //String encoding = Charset.defaultCharset().name();  //   pipeline.properties.getProperty("encoding");
     ServerSocket server = null;
     Socket client = null;
     

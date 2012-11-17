@@ -38,3 +38,4 @@ var test2 = TestObj.readFromFile(tempFilePath);
 console.log(typeof (test2));
 console.log(JSON.stringify(test2, null, "  "));
 console.log(test2.getS1());
+//@ sourceMappingURL=test-02.js.map

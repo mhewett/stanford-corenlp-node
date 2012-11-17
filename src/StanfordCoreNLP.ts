@@ -192,15 +192,16 @@ export module StanfordCoreNLP {
             // Set up the arguments.
             var args = [nlpDir];
             if (propsLocation && fs.existsSync(propsLocation)) {
-                // args.push('-props');
-                // args.push("file://" + path.resolve(__dirname, propsLocation));
+                args.push('-props');
+                args.push(path.resolve(__dirname, propsLocation));
+                console.log("Properties files is: ", path.resolve(__dirname, propsLocation));
             }
 
             // Start the program            
             this.nlpProcess = osProcess.execFile(nlpProgram, args, {});      // {"cwd": nlpDir});
             
             this.nlpProcess.stdout.on("data", function(data) {
-                //console.log(data);
+                console.log(data);
                 if (data.match("listening on port")) {
                     myInstance.startClient(myInstance, callback);
                 }

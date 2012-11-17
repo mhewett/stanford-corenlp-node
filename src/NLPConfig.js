@@ -86,5 +86,5 @@ var path = require("path");
     })();
     NLPConfig.Configuration = Configuration;    
 })(exports.NLPConfig || (exports.NLPConfig = {}));
-
-
+var NLPConfig = exports.NLPConfig;
+//@ sourceMappingURL=NLPConfig.js.map

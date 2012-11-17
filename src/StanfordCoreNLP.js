@@ -105,10 +105,14 @@ var xml2json = require("xml2json");
                 nlpDir
             ];
             if(propsLocation && fs.existsSync(propsLocation)) {
+                args.push('-props');
+                args.push(path.resolve(__dirname, propsLocation));
+                console.log("Properties files is: ", path.resolve(__dirname, propsLocation));
             }
             this.nlpProcess = osProcess.execFile(nlpProgram, args, {
             });
             this.nlpProcess.stdout.on("data", function (data) {
+                console.log(data);
                 if(data.match("listening on port")) {
                     myInstance.startClient(myInstance, callback);
                 }
@@ -151,5 +155,5 @@ var xml2json = require("xml2json");
     })();
     StanfordCoreNLP.ServerStatus = ServerStatus;    
 })(exports.StanfordCoreNLP || (exports.StanfordCoreNLP = {}));
-
-
+var StanfordCoreNLP = exports.StanfordCoreNLP;
+//@ sourceMappingURL=StanfordCoreNLP.js.map

@@ -37,4 +37,4 @@ var testNLP = function () {
     }
 };
 events.subscribe(SERVER_AVAILABLE, testNLP);
-
+//@ sourceMappingURL=test-01.js.map

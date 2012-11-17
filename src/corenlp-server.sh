@@ -8,7 +8,7 @@
 #    ./corenlp-server.sh {stanford-corenlp-dir} options
 
 NLP_DIR=$1
-echo "Dir is $NLP_DIR"
+# echo "Dir is $NLP_DIR"
 
 CLASSPATH=../java-src:${NLP_DIR}/stanford-corenlp-2012-07-09.jar:${NLP_DIR}/stanford-corenlp-2012-07-06-models.jar:${NLP_DIR}/joda-time.jar:${NLP_DIR}/xom.jar
 
