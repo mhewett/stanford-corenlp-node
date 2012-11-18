@@ -6,14 +6,14 @@ var xml2json = require("xml2json");
 
 (function (StanfordCoreNLP) {
     var Server = (function () {
-        function Server(_config) {
+        function Server(configfilepath) {
             this.state = ServerState.STOPPED;
             this.startTime = null;
             this.nlpProcess = null;
             this.client = null;
             this.replyCallback = null;
             this.replyBuffer = "";
-            this.configuration = _config;
+            this.configuration = ServerConfiguration.readFromFile(configfilepath);
         }
         Server.prototype.getStatus = function () {
             var status = new ServerStatus();
@@ -154,6 +154,89 @@ var xml2json = require("xml2json");
         return ServerStatus;
     })();
     StanfordCoreNLP.ServerStatus = ServerStatus;    
+    var ServerConfiguration = (function () {
+        function ServerConfiguration() {
+            this.outputFormat = "json";
+        }
+        ServerConfiguration.prototype.getId = function () {
+            return this.id;
+        };
+        ServerConfiguration.prototype.setId = function (newValue) {
+            this.id = newValue;
+            return this;
+        };
+        ServerConfiguration.prototype.getName = function () {
+            return this.name;
+        };
+        ServerConfiguration.prototype.setName = function (newValue) {
+            this.name = newValue;
+            return this;
+        };
+        ServerConfiguration.prototype.getDescription = function () {
+            return this.description;
+        };
+        ServerConfiguration.prototype.setDescription = function (newValue) {
+            this.description = newValue;
+            return this;
+        };
+        ServerConfiguration.prototype.getNlpLibDir = function () {
+            return this.nlpLibDir;
+        };
+        ServerConfiguration.prototype.setNlpLibDir = function (newValue) {
+            this.nlpLibDir = newValue;
+            return this;
+        };
+        ServerConfiguration.prototype.getOutputFormat = function () {
+            return this.outputFormat;
+        };
+        ServerConfiguration.prototype.setOutputFormat = function (newValue) {
+            this.outputFormat = newValue;
+            return this;
+        };
+        ServerConfiguration.prototype.getPath = function () {
+            return this.path;
+        };
+        ServerConfiguration.prototype.setPath = function (newValue) {
+            this.path = newValue;
+            return this;
+        };
+        ServerConfiguration.prototype.getHost = function () {
+            return this.host;
+        };
+        ServerConfiguration.prototype.setHost = function (newValue) {
+            this.host = newValue;
+            return this;
+        };
+        ServerConfiguration.prototype.getPort = function () {
+            return this.port;
+        };
+        ServerConfiguration.prototype.setPort = function (newValue) {
+            this.port = newValue;
+            return this;
+        };
+        ServerConfiguration.prototype.getPropsPath = function () {
+            return this.propsPath;
+        };
+        ServerConfiguration.prototype.setPropsPath = function (newValue) {
+            this.propsPath = newValue;
+            return this;
+        };
+        ServerConfiguration.readFromFile = function readFromFile(path) {
+            var obj = JSON.parse(fs.readFileSync(path, 'utf8'));
+            var returnObj = new ServerConfiguration();
+            for(var prop in obj) {
+                if(obj.hasOwnProperty(prop)) {
+                    returnObj[prop] = obj[prop];
+                }
+            }
+            return returnObj;
+        }
+        ServerConfiguration.prototype.writeToFile = function (path) {
+            fs.writeFileSync(path, JSON.stringify(this, null, "  "), 'utf8');
+        };
+        return ServerConfiguration;
+    })();
+    StanfordCoreNLP.ServerConfiguration = ServerConfiguration;    
 })(exports.StanfordCoreNLP || (exports.StanfordCoreNLP = {}));
 var StanfordCoreNLP = exports.StanfordCoreNLP;
 //@ sourceMappingURL=StanfordCoreNLP.js.map

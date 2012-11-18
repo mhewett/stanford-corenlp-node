@@ -1,10 +1,7 @@
 var events = require("minpubsub/minpubsub");
 var nlplib = require("./StanfordCoreNLP")
-var nlpconfig = require("./NLPConfig")
 var SERVER_AVAILABLE = "Server started";
-var config = nlpconfig.NLPConfig.Configuration.readFromFile("../config.json");
-console.log("Loaded the ", config.getName(), " config file.");
-var nlpServer = new nlplib.StanfordCoreNLP.Server(config);
+var nlpServer = new nlplib.StanfordCoreNLP.Server("../config.json");
 console.log("NLP server status: ", nlpServer.getStatus().getState());
 nlpServer.start(function () {
     events.publish(SERVER_AVAILABLE);

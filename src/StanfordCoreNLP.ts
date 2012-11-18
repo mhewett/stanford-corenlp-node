@@ -17,7 +17,6 @@ var path = require("path");
 var xml2json = require("xml2json");
 
 
-
 import nlpconfig = module("NLPConfig");
 
 export module StanfordCoreNLP {
@@ -42,7 +41,7 @@ export module StanfordCoreNLP {
 
         private state: string = ServerState.STOPPED;
         private startTime: Date = null;
-        private configuration: nlpconfig.NLPConfig.Configuration;  // The configuration for this server
+        private configuration: ServerConfiguration;  // The configuration for this server
         private nlpProcess: any = null;
         private client: any = null;
         private replyCallback : any = null;
@@ -52,8 +51,8 @@ export module StanfordCoreNLP {
         /**
          * Constructs a new instance of a Stanford CoreNLP server.
          */
-        constructor(_config: nlpconfig.NLPConfig.Configuration) {
-            this.configuration = _config;
+        constructor(configfilepath: string) {
+            this.configuration = ServerConfiguration.readFromFile(configfilepath);
         }
     
         /**
@@ -251,5 +250,144 @@ export module StanfordCoreNLP {
         public getStartTime() {
             return this.startTime;
         }
+    }
+
+    /**
+     * This class encapsulates the description of how to run an NLP Server.
+     */
+    export class ServerConfiguration {
+        
+        private id: string;         // "stanfordnlp"
+        private name: string;       //"Stanford CoreNLP",
+        private description: string; 
+        private path: string;       // The path to the executable program.
+        private nlpLibDir: string;     // Folder containing NLP library
+        private host: string;       // "localhost"
+        private port: string;       // "1234",
+        private propsPath: string;  // Path to the properties file.
+        private outputFormat: string = "json";  // "xml" or "json"
+
+        /** Getter */
+        public getId() { 
+            return this.id;
+        }
+
+        /** Setter */
+        public setId(newValue: string) {
+            this.id = newValue; 
+            return this;
+        }
+
+        /** Getter */
+        public getName() { 
+            return this.name;
+        }
+
+        /** Setter */
+        public setName(newValue: string) {
+            this.name = newValue; 
+            return this;
+        }
+
+        /** Getter */
+        public getDescription() { 
+            return this.description;
+        }
+
+        /** Setter */
+        public setDescription(newValue: string) {
+            this.description = newValue; 
+            return this;
+        }
+
+        /** Getter */
+        public getNlpLibDir() { 
+            return this.nlpLibDir;
+        }
+
+        /** Setter */
+        public setNlpLibDir(newValue: string) {
+            this.nlpLibDir = newValue; 
+            return this;
+        }
+
+        /** Getter */
+        public getOutputFormat() { 
+            return this.outputFormat;
+        }
+
+        /** Setter */
+        public setOutputFormat(newValue: string) {
+            this.outputFormat = newValue; 
+            return this;
+        }
+
+        /** Getter */
+        public getPath() { 
+            return this.path;
+        }
+
+        /** Setter */
+        public setPath(newValue: string) {
+            this.path = newValue; 
+            return this;
+        }
+
+        /** Getter */
+        public getHost() { 
+            return this.host;
+        }
+
+        /** Setter */
+        public setHost(newValue: string) {
+            this.host = newValue; 
+            return this;
+        }
+
+        /** Getter */
+        public getPort() { 
+            return this.port;
+        }
+
+        /** Setter */
+        public setPort(newValue: string) {
+            this.port = newValue; 
+            return this;
+        }
+
+        /** Getter */
+        public getPropsPath() { 
+            return this.propsPath;
+        }
+
+        /** Setter */
+        public setPropsPath(newValue: string) {
+            this.propsPath = newValue; 
+            return this;
+        }
+        
+        /**
+         * Reads an instance of this class from a file.
+         */
+        public static readFromFile(path: string) : ServerConfiguration {
+            var obj: Object = JSON.parse(fs.readFileSync(path, 'utf8'));
+        
+            // Create a new testObj and copy the fields over
+            var returnObj = new ServerConfiguration();
+            for (var prop in obj) {
+                if (obj.hasOwnProperty(prop)) {
+                    returnObj[prop] = obj[prop];
+                }
+            }
+        
+            return returnObj;
+        }
+
+        /**
+         * Writes this object in JSON format to the given file.
+         */        
+        public writeToFile(path: string) {
+            fs.writeFileSync(path, JSON.stringify(this, null, "  "), 'utf8');
+        }    
     }
 }
