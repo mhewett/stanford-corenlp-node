@@ -4,7 +4,7 @@
     "name": "Stanford CoreNLP",
     "comment": "Supply a path if you want to start the NLP server, or a host:port if it is already running",
     "path": "./corenlp-server.sh",
-    "nlpLibDir": "/Users/hewett/tools/Stanford-NLP-Core/stanford-corenlp-2012-07-09",
+    "nlpLibDir": "/Users/shamod/projects/packages/standford-core-nlp/stanford-corenlp-2012-07-09",
     "host": "localhost",
     "port": "9900",
     "propsPath": "./StanfordCoreNLP.properties",

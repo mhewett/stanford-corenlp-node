@@ -1,6 +1,7 @@
 {
   "author": "LEM Labs, Inc",
   "name": "stanford-corenlp-node",
+  "main": "./src/StanfordCoreNLP",
   "description": "Node.js web services and library interface to the Stanford CoreNLP library",
   "version": "0.1.0",
   "homepage": "",
