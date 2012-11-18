@@ -52,7 +52,12 @@ export module StanfordCoreNLP {
          * Constructs a new instance of a Stanford CoreNLP server.
          */
         constructor(configfilepath: string) {
-            this.configuration = ServerConfiguration.readFromFile(configfilepath);
+            if(configfilepath) {
+                this.configuration = ServerConfiguration.readFromFile(path.resolve(__dirname, configfilepath));    
+            }
+            else {
+                console.log("Please provide the correct configuration file path");
+            }            
         }
     
         /**

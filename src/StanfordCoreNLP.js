@@ -13,7 +13,11 @@ var xml2json = require("xml2json");
             this.client = null;
             this.replyCallback = null;
             this.replyBuffer = "";
-            this.configuration = ServerConfiguration.readFromFile(configfilepath);
+            if(configfilepath) {
+                this.configuration = ServerConfiguration.readFromFile(path.resolve(__dirname, configfilepath));
+            } else {
+                console.log("Please provide the correct configuration file path");
+            }
         }
         Server.prototype.getStatus = function () {
             var status = new ServerStatus();
