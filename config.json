@@ -2,7 +2,7 @@
     "comment": "Sample config file for stanford-corenlp-node",
     
     "name": "Stanford CoreNLP",
-    "comment": "Supply a path if you want to start the NLP server, or a host:port if it is already running",
+    "comment": "Supply a path to the NLP library (where the corenlp jars are).  The host and port will be used to start a web services server." 
     "path": "./corenlp-server.sh",
     "nlpLibDir": "/Users/shamod/projects/packages/standford-core-nlp/stanford-corenlp-2012-07-09",
     "host": "localhost",
