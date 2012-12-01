@@ -19,3 +19,5 @@ Update: 01 December 2012
   - We have a Node.js package that talks to the server.
   - Configuration files define the NLP options.
   - We are finalizing the examples.
+  - We have documentation for the web services but have not started implementing them yet.
+
