@@ -10,7 +10,7 @@
 NLP_DIR=$1
 # echo "Dir is $NLP_DIR"
 
-CLASSPATH=..node_modules/stanford-corenlp-node/java-src:${NLP_DIR}/stanford-corenlp-2012-07-09.jar:${NLP_DIR}/stanford-corenlp-2012-07-06-models.jar:${NLP_DIR}/joda-time.jar:${NLP_DIR}/xom.jar
+CLASSPATH=../node_modules/stanford-corenlp-node/java-src:${NLP_DIR}/stanford-corenlp-2012-07-09.jar:${NLP_DIR}/stanford-corenlp-2012-07-06-models.jar:${NLP_DIR}/joda-time.jar:${NLP_DIR}/xom.jar
 
 # Eat one of the input parameters
 shift
