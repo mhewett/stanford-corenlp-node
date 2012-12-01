@@ -30,7 +30,7 @@ module.exports = function(grunt) {
     },
     typescript: {
       base: {
-        src: ['src/**/*.ts'],
+        src: ['src/**/*.ts', 'example/**/*.ts'],
         dest: 'src',
         options: {
           module: 'commonjs', //or amd

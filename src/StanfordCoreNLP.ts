@@ -15,7 +15,7 @@ var net = require("net");
 var osProcess = require("child_process");
 var path = require("path");
 var xml2json = require("xml2json");
-
+//var process = require("process");
 
 export module StanfordCoreNLP {
   
