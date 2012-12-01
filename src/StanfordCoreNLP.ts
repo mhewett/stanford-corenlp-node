@@ -51,7 +51,7 @@ export module StanfordCoreNLP {
          */
         constructor(configfilepath: string) {
             if(configfilepath) {
-                this.configuration = ServerConfiguration.readFromFile(path.resolve(__dirname, configfilepath));    
+                this.configuration = ServerConfiguration.readFromFile(configfilepath);  // path.resolve(__dirname, configfilepath));    
             }
             else {
                 console.log("Please provide the correct configuration file path");
@@ -195,8 +195,8 @@ export module StanfordCoreNLP {
             var args = [nlpDir];
             if (propsLocation && fs.existsSync(propsLocation)) {
                 args.push('-props');
-                args.push(path.resolve(__dirname, propsLocation));
-                console.log("Properties files is: ", path.resolve(__dirname, propsLocation));
+                args.push(propsLocation);  // path.resolve(__dirname, propsLocation));
+                console.log("Properties files is: ", propsLocation);  // path.resolve(__dirname, propsLocation));
             }
 
             // Start the program            

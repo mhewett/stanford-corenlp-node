@@ -13,7 +13,7 @@ var xml2json = require("xml2json");
             this.replyCallback = null;
             this.replyBuffer = "";
             if(configfilepath) {
-                this.configuration = ServerConfiguration.readFromFile(path.resolve(__dirname, configfilepath));
+                this.configuration = ServerConfiguration.readFromFile(configfilepath);
             } else {
                 console.log("Please provide the correct configuration file path");
             }
@@ -109,8 +109,8 @@ var xml2json = require("xml2json");
             ];
             if(propsLocation && fs.existsSync(propsLocation)) {
                 args.push('-props');
-                args.push(path.resolve(__dirname, propsLocation));
-                console.log("Properties files is: ", path.resolve(__dirname, propsLocation));
+                args.push(propsLocation);
+                console.log("Properties files is: ", propsLocation);
             }
             this.nlpProcess = osProcess.execFile(nlpProgram, args, {
             });
