@@ -17,8 +17,6 @@ var path = require("path");
 var xml2json = require("xml2json");
 
 
-import nlpconfig = module("NLPConfig");
-
 export module StanfordCoreNLP {
   
     /**
