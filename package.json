@@ -3,7 +3,7 @@
   "name": "stanford-corenlp-node",
   "main": "./src/StanfordCoreNLP",
   "description": "Node.js web services and library interface to the Stanford CoreNLP library",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "homepage": "",
   "repository": {
     "type": "git",
