@@ -192,6 +192,12 @@ export module StanfordCoreNLP {
                 return false;
             }
             
+            // Don't start it if it is not running on localhost
+            if (this.configuration.getHost() !== "localhost") {
+              console.log("Contacting remote client");
+              this.startClient(this, callback);
+            }
+
             var myInstance = this;
             var nlpProgram = this.configuration.getPath();
             var nlpDir = this.configuration.getNlpLibDir();

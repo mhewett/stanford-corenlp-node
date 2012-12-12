@@ -103,6 +103,10 @@ var xml2json = require("xml2json");
                 console.log("Please supply a configuration with an executable path");
                 return false;
             }
+            if(this.configuration.getHost() !== "localhost") {
+                console.log("Contacting remote client");
+                this.startClient(this, callback);
+            }
             var myInstance = this;
             var nlpProgram = this.configuration.getPath();
             var nlpDir = this.configuration.getNlpLibDir();
