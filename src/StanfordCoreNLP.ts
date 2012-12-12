@@ -196,6 +196,7 @@ export module StanfordCoreNLP {
             if (this.configuration.getHost() !== "localhost") {
               console.log("Contacting remote client");
               this.startClient(this, callback);
+              return true;
             }
 
             var myInstance = this;
