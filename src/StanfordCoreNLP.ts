@@ -57,6 +57,13 @@ export module StanfordCoreNLP {
                 console.log("Please provide the correct configuration file path");
             }            
         }
+        
+        /**
+         * Return the configuration
+         */
+        public getConfiguration() {
+          return this.configuration;
+        }
     
         /**
          * Returns the status of the server.  
@@ -162,7 +169,7 @@ export module StanfordCoreNLP {
          */
         startClient(me: Server, callback : any) {
             if (! me.client) {
-                me.client = net.connect({port: me.configuration.getPort()},
+                me.client = net.connect({host: me.configuration.getHost(), port: me.configuration.getPort()},
                     function() {
                         console.log("NLP client started.");
                         callback();

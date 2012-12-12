@@ -18,6 +18,9 @@ var xml2json = require("xml2json");
                 console.log("Please provide the correct configuration file path");
             }
         }
+        Server.prototype.getConfiguration = function () {
+            return this.configuration;
+        };
         Server.prototype.getStatus = function () {
             var status = new ServerStatus();
             status.setState(this.state);
@@ -78,6 +81,7 @@ var xml2json = require("xml2json");
         Server.prototype.startClient = function (me, callback) {
             if(!me.client) {
                 me.client = net.connect({
+                    host: me.configuration.getHost(),
                     port: me.configuration.getPort()
                 }, function () {
                     console.log("NLP client started.");
@@ -242,4 +246,3 @@ var xml2json = require("xml2json");
     StanfordCoreNLP.ServerConfiguration = ServerConfiguration;    
 })(exports.StanfordCoreNLP || (exports.StanfordCoreNLP = {}));
 var StanfordCoreNLP = exports.StanfordCoreNLP;
-//@ sourceMappingURL=StanfordCoreNLP.js.map
