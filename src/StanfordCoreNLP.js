@@ -106,6 +106,7 @@ var xml2json = require("xml2json");
             if(this.configuration.getHost() !== "localhost") {
                 console.log("Contacting remote client");
                 this.startClient(this, callback);
+                return true;
             }
             var myInstance = this;
             var nlpProgram = this.configuration.getPath();
