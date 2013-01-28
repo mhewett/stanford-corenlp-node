@@ -5,7 +5,7 @@
     "comment": "Supply a path to the NLP library (where the corenlp jars are).  The host and port will be used to start a web services server.", 
     "path": "../src/corenlp-server.sh",
     "nlpLibDir": "/Users/hewett/projects/stanford-corenlp-server/lib",
-    "classpath": "/Users/hewett/projects/stanford-corenlp-server/lib/jersey-bundle-1.17.jar:/Users/hewett/projects/stanford-corenlp-server/lib/jersey-simple-server-1.17.jar:/Users/hewett/projects/stanford-corenlp-server/lib/simple-5.0.4.jar",
+    "classpath": "../java/src:../java/lib/jersey-bundle-1.17.jar:../java/lib/jersey-simple-server-1.17.jar:../java/lib/simple-5.0.4.jar",
     "host": "localhost",
     "port": "9900",
     "propsPath": "./StanfordCoreNLP-test.properties",
