@@ -14,10 +14,8 @@ var fs = require("fs");
 var net = require("net");
 var osProcess = require("child_process");
 var path = require("path");
-var request = require("request");
 var xml2json = require("xml2json");
 //var process = require("process");
-
 
 export module StanfordCoreNLP {
   
@@ -29,9 +27,9 @@ export module StanfordCoreNLP {
      * Methods are also provided to start, stop and get the status of the Stanford CoreNLP server.
      *
      * Usage:
-     *   1. var myServer = new StanfordCoreNLP.Server("nlp-config.json");
-     *   2. myServer.start(callback);  // Callback is called when it has started.
-     *   3. var results = myServer.process("text...", callback);  // callback is called with the JSON results
+     *   1. var myServer = new StanfordCoreNLP.Server(host, port);
+     *   2. myServer.start();  // if it is not already running
+     *   3. var results = myServer.process("text...");
      *   4. ...
      *   5. myServer.stop();
      *
@@ -39,14 +37,15 @@ export module StanfordCoreNLP {
      */
     export class Server {
 
-        private static CORENLP_WEB_SERVICE_BASE : string = "/corenlp/api/v1/"; 
-        
         private state: string = ServerState.STOPPED;
         private startTime: Date = null;
         private configuration: ServerConfiguration;  // The configuration for this server
         private nlpProcess: any = null;
         private client: any = null;
-
+        private replyCallback : any = null;
+        private replyBuffer : string = "";
+        
+    
         /**
          * Constructs a new instance of a Stanford CoreNLP server.
          */
@@ -83,44 +82,33 @@ export module StanfordCoreNLP {
          * 
          */
         public process(text: string, callback) {
-          if (this.configuration.getDebug()) {
+            this.replyBuffer = "";
+            this.replyCallback = callback;
             console.log("Sending string to NLP: ", text);
-          }
-          
-          var url = "http://" + this.configuration.getHost()
-                    + ":" + this.configuration.getPort()
-                    + Server.CORENLP_WEB_SERVICE_BASE + "analysis";
-          
-          var that = this;
-          this.callWebService(url,
-            {"text": text}, 
-            function(wsResponse) {
-              if (that.configuration.getDebug()) {
-                console.log("Stanford CoreNLP: ", wsResponse);
-              }
-              
-              if (wsResponse && wsResponse.status) {
-                // It is already JSON
-                callback(wsResponse);
-              }
-              
-              // Otherwise, convert from XML to JSON
-              var replyText = wsResponse;
-              if (that.configuration.getOutputFormat() === "json") {
+            this.client.write(text + "\n");
+        }
+        
+        /**
+         * Reply to the process() call.
+         * This is not right yet.
+         * It's not safe for multiple concurrent calls.
+         */
+        public reply(text: string) {
+            this.replyBuffer = "";
+            // Convert XML to JSON
+            var replyText = text;
+            if (this.configuration.getOutputFormat() === "json") {
                 try {
-                    replyText = xml2json.toJson(replyText);
+                    replyText = xml2json.toJson(text);
                 } catch (ex) {
                     console.log(ex);
                     console.log("========================================");
-                    console.log(replyText);
+                    console.log(text);
                     console.log("========================================");
                 }
-              }
-
-              callback(replyText);
-            });
+            }
+            this.replyCallback(replyText);
         }
-
 
         /**
          * Start the NLP server, if it is not already started.
@@ -176,55 +164,28 @@ export module StanfordCoreNLP {
         }
 
         /**
-         * Checks the "hello" web service and tells the client if it is ready.
-         * This procedure takes the server as an argument and should be called when the client is ready.
-         * The callback takes no arguments.
+         * Contact the NLP server on a socket.
+         * The callback does not take any arguments and should be called when the client is ready.
          */
         startClient(me: Server, callback : any) {
-          var url = "http://" + this.configuration.getHost()
-                    + ":" + this.configuration.getPort()
-                    + Server.CORENLP_WEB_SERVICE_BASE + "hello";
-          
-          this.callWebService(url, null, callback);
+            if (! me.client) {
+                me.client = net.connect({host: me.configuration.getHost(), port: me.configuration.getPort()},
+                    function() {
+                        console.log("NLP client started.");
+                        callback();
+                        });
+                me.client.on('data', function(data) {
+                    me.replyBuffer += data.toString();
+                    if (me.replyBuffer.match("</root>")) {
+                        me.reply(me.replyBuffer);
+                    }
+                });
+                me.client.on('end', function() {
+                    console.log('NLP client disconnected.');
+                });
+            }
         }
-  
-        /**
-         * Calls the web service.  
-         * @param options: options to http.request()
-         * @param data: JSON data if POST, null if GET
-         * @para callback: function to be called with the output
-         */      
-        callWebService(url : string, formdata: any, callback: any) {
-          if (formdata) {
-            request.post(url, { "form" : formdata}, 
-              function(error, response, body) {
-                if (error || response.statusCode != 201) {
-                  console.log(response.statusCode, ": ", error);
-                  callback({ "status": "error" });
-                } else {
-                  callback(body);  
-                }
-              });
-          }
-          else {
-            request.get(url,
-              function(error, response, body) {
-                if (error || response.statusCode != 200) {
-                  console.log(response.statusCode, ": ", error);
-                  callback({ "status": "error" });
-                } else {
-                  callback(body);  
-                }
-              });
-          }
-        }
-        
-        /**
-         * Call this to start the Stanford CoreNLP library.  
-         * It will return callback() with no parameters when it is ready.
-         * It check readiness by waiting about 10 seconds, then calling
-         * the "hello" web service.
-         */
+                
         runNLP(callback) {
             if ((! this.configuration) || (! this.configuration.getPath())) {
                 console.log("Please supply a configuration with an executable path");
@@ -241,12 +202,11 @@ export module StanfordCoreNLP {
             var myInstance = this;
             var nlpProgram = this.configuration.getPath();
             var nlpDir = this.configuration.getNlpLibDir();
-            var classpath = this.configuration.getClasspath();
             var propsLocation = this.configuration.getPropsPath();
             console.log("Starting: ", nlpProgram);
             
             // Set up the arguments.
-            var args = [nlpDir, classpath];
+            var args = [nlpDir];
             if (propsLocation && fs.existsSync(propsLocation)) {
                 args.push('-props');
                 args.push(propsLocation);  // path.resolve(__dirname, propsLocation));
@@ -256,10 +216,9 @@ export module StanfordCoreNLP {
             // Start the program            
             this.nlpProcess = osProcess.execFile(nlpProgram, args, {});      // {"cwd": nlpDir});
             
-            // Wait for the process to start
             this.nlpProcess.stdout.on("data", function(data) {
                 console.log(data);
-                if (data.match("running on port")) {
+                if (data.match("listening on port")) {
                     myInstance.startClient(myInstance, callback);
                 }
             });
@@ -315,16 +274,14 @@ export module StanfordCoreNLP {
      */
     export class ServerConfiguration {
         
-        private id: string = "stanford-corenlp";  // "stanfordnlp"
-        private name: string = null;            //"Stanford CoreNLP",
-        private debug: bool = false;
-        private description: string = null; 
-        private path: string = null;            // The path to the executable program.
-        private classpath: string = ".";        // Optional classpath
-        private nlpLibDir: string = null;       // Folder containing NLP library
-        private host: string = null;            // "localhost"
-        private port: string = null;            // "1234",
-        private propsPath: string = null;       // Path to the properties file.
+        private id: string;         // "stanfordnlp"
+        private name: string;       //"Stanford CoreNLP",
+        private description: string; 
+        private path: string;       // The path to the executable program.
+        private nlpLibDir: string;     // Folder containing NLP library
+        private host: string;       // "localhost"
+        private port: string;       // "1234",
+        private propsPath: string;  // Path to the properties file.
         private outputFormat: string = "json";  // "xml" or "json"
 
         /** Getter */
@@ -346,28 +303,6 @@ export module StanfordCoreNLP {
         /** Setter */
         public setName(newValue: string) {
             this.name = newValue; 
-            return this;
-        }
-
-        /** Getter */
-        public getClasspath() { 
-            return this.classpath;
-        }
-
-        /** Setter */
-        public setClasspath(newValue: string) {
-            this.classpath = newValue; 
-            return this;
-        }
-
-        /** Getter */
-        public getDebug() { 
-            return this.debug;
-        }
-
-        /** Setter */
-        public setDebug(newValue: bool) {
-            this.debug = newValue; 
             return this;
         }
 
@@ -452,19 +387,17 @@ export module StanfordCoreNLP {
          * Reads an instance of this class from a file.
          */
         public static readFromFile(path: string) : ServerConfiguration {
-          console.log("Loading config file: ", path)
-          var obj: Object = JSON.parse(fs.readFileSync(path, 'utf8'));
-          // console.log(JSON.stringify(obj, null, "  "));  
+            var obj: Object = JSON.parse(fs.readFileSync(path, 'utf8'));
         
-          // Create a new testObj and copy the fields over
-          var returnObj = new ServerConfiguration();
-          for (var prop in obj) {
-            if (obj.hasOwnProperty(prop)) {
-              returnObj[prop] = obj[prop];
+            // Create a new testObj and copy the fields over
+            var returnObj = new ServerConfiguration();
+            for (var prop in obj) {
+                if (obj.hasOwnProperty(prop)) {
+                    returnObj[prop] = obj[prop];
+                }
             }
-          }
         
-          return returnObj;
+            return returnObj;
         }
 
         /**

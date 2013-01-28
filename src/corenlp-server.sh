@@ -9,11 +9,16 @@
 
 NLP_DIR=$1
 # echo "Dir is $NLP_DIR"
+# Eat the parameter
+shift
 
-CLASSPATH=../node_modules/stanford-corenlp-node/java-src:${NLP_DIR}/stanford-corenlp-2012-07-09.jar:${NLP_DIR}/stanford-corenlp-2012-07-06-models.jar:${NLP_DIR}/joda-time.jar:${NLP_DIR}/xom.jar
-
+# classpath is the second parameter
+CP=$1
 # Eat one of the input parameters
 shift
+
+CLASSPATH=${CP}:../java-src:${NLP_DIR}/stanford-corenlp-2012-07-09.jar:${NLP_DIR}/stanford-corenlp-2012-07-06-models.jar:${NLP_DIR}/joda-time.jar:${NLP_DIR}/xom.jar
+
 
 # Run the program
 echo java -Xmx3g -cp "$CLASSPATH" com.lemlabs.nlp.StanfordCoreNLPServer $*

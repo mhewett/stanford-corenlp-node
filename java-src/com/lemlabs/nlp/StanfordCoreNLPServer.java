@@ -1,14 +1,20 @@
 package com.lemlabs.nlp;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Properties;
+
+import com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;
+import com.sun.jersey.api.core.DefaultResourceConfig;
+import com.sun.jersey.simple.container.SimpleServerFactory;
 
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.DefaultPaths;
@@ -37,6 +43,10 @@ public class StanfordCoreNLPServer
   
   private static String port = DEFAULT_PORT;
   private static String nlpDir = DEFAULT_NLP_DIR;
+  
+  public static String DEFAULT_ERROR_MESSAGE = "** ERROR: ";
+  
+  private static StanfordCoreNLP sPipeline = null;
   
   
   /**
@@ -91,13 +101,13 @@ public class StanfordCoreNLPServer
     // construct the pipeline
     //
     System.out.println("Creating the NLP pipeline");
-    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-    props = pipeline.getProperties();
+    sPipeline = new StanfordCoreNLP(props);
+    props = sPipeline.getProperties();
     //long setupTime = tim.report();
 
     // blank line after all the loading statements to make output more readable
     System.out.println("");
-    
+    /*    
     try
     {
       openSocket(pipeline);
@@ -105,6 +115,33 @@ public class StanfordCoreNLPServer
     {
       ex.printStackTrace();
       fatal(ex.getMessage());
+    }
+ */
+    
+    DefaultResourceConfig resourceConfig = new DefaultResourceConfig(NLPWebService.class);
+    // The following line is to enable GZIP when client accepts it
+    resourceConfig.getContainerResponseFilters().add(new GZIPContentEncodingFilter());
+    Closeable webService = null;
+    try {
+      webService = SimpleServerFactory.create("http://0.0.0.0:" + DEFAULT_PORT, resourceConfig);
+      System.out.println("Stanford CoreNLP web service is running on port " + DEFAULT_PORT);
+      
+      // This is required, otherwise the server stops immediately
+      System.out.println("Press any key to stop the service...");
+      System.in.read();
+    } catch (IOException ex)
+    {
+      ex.printStackTrace();
+    } finally {
+      if (webService != null)
+        try
+        {
+          System.out.println("Terminating Stanford CoreNLP web service.");
+          webService.close();
+        } catch (IOException ex)
+        {
+          ex.printStackTrace();
+        }
     }
 
   }
@@ -155,6 +192,35 @@ public class StanfordCoreNLPServer
     }
 
     System.out.println("Shutting down server.");
+  }
+  
+  /**
+   * This is synchronized since the CoreNLP library is not thread-safe.
+   * It is designed to be called from the web service.
+   * @param text the text to process
+   * @return an XML representation of the output
+   */
+  public static synchronized String processText(String text)
+  {
+    StringWriter outWriter = new StringWriter();
+    
+    try {
+      if (text.length() > 0) 
+      {
+        Annotation anno = sPipeline.process(text);
+        //pipeline.prettyPrint(anno, clientOut);
+        sPipeline.xmlPrint(anno, outWriter);
+        String result = outWriter.toString();
+        System.out.println("NLP processed " + text.length() + " bytes, producing " + result.length() + " bytes.");
+        return result;
+      }
+
+      return null;
+
+    } catch (IOException ex) {
+      ex.printStackTrace();
+      return DEFAULT_ERROR_MESSAGE + ex.getMessage();
+    }
   }
 
   /**

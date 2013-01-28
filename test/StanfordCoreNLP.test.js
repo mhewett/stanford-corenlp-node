@@ -19,7 +19,7 @@ var nlplib = require('../src/StanfordCoreNLP');
 describe('Server', function(){
 	var server;
 	before(function(){		
-		server = new nlplib.StanfordCoreNLP.Server('../config.json');
+		server = new nlplib.StanfordCoreNLP.Server('./test-config.json');
 	});
 
 	describe('test if the server exists', function() {

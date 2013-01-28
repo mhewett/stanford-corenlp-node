@@ -2,7 +2,6 @@ var fs = require("fs");
 var net = require("net");
 var osProcess = require("child_process");
 var path = require("path");
-var request = require("request");
 var xml2json = require("xml2json");
 (function (StanfordCoreNLP) {
     var Server = (function () {
@@ -11,13 +10,14 @@ var xml2json = require("xml2json");
             this.startTime = null;
             this.nlpProcess = null;
             this.client = null;
+            this.replyCallback = null;
+            this.replyBuffer = "";
             if(configfilepath) {
                 this.configuration = ServerConfiguration.readFromFile(configfilepath);
             } else {
                 console.log("Please provide the correct configuration file path");
             }
         }
-        Server.CORENLP_WEB_SERVICE_BASE = "/corenlp/api/v1/";
         Server.prototype.getConfiguration = function () {
             return this.configuration;
         };
@@ -28,33 +28,25 @@ var xml2json = require("xml2json");
             return status;
         };
         Server.prototype.process = function (text, callback) {
-            if(this.configuration.getDebug()) {
-                console.log("Sending string to NLP: ", text);
+            this.replyBuffer = "";
+            this.replyCallback = callback;
+            console.log("Sending string to NLP: ", text);
+            this.client.write(text + "\n");
+        };
+        Server.prototype.reply = function (text) {
+            this.replyBuffer = "";
+            var replyText = text;
+            if(this.configuration.getOutputFormat() === "json") {
+                try  {
+                    replyText = xml2json.toJson(text);
+                } catch (ex) {
+                    console.log(ex);
+                    console.log("========================================");
+                    console.log(text);
+                    console.log("========================================");
+                }
             }
-            var url = "http://" + this.configuration.getHost() + ":" + this.configuration.getPort() + Server.CORENLP_WEB_SERVICE_BASE + "analysis";
-            var that = this;
-            this.callWebService(url, {
-                "text": text
-            }, function (wsResponse) {
-                if(that.configuration.getDebug()) {
-                    console.log("Stanford CoreNLP: ", wsResponse);
-                }
-                if(wsResponse && wsResponse.status) {
-                    callback(wsResponse);
-                }
-                var replyText = wsResponse;
-                if(that.configuration.getOutputFormat() === "json") {
-                    try  {
-                        replyText = xml2json.toJson(replyText);
-                    } catch (ex) {
-                        console.log(ex);
-                        console.log("========================================");
-                        console.log(replyText);
-                        console.log("========================================");
-                    }
-                }
-                callback(replyText);
-            });
+            this.replyCallback(replyText);
         };
         Server.prototype.start = function (callback) {
             if(this.state === ServerState.STARTED) {
@@ -87,33 +79,22 @@ var xml2json = require("xml2json");
             return this.state;
         };
         Server.prototype.startClient = function (me, callback) {
-            var url = "http://" + this.configuration.getHost() + ":" + this.configuration.getPort() + Server.CORENLP_WEB_SERVICE_BASE + "hello";
-            this.callWebService(url, null, callback);
-        };
-        Server.prototype.callWebService = function (url, formdata, callback) {
-            if(formdata) {
-                request.post(url, {
-                    "form": formdata
-                }, function (error, response, body) {
-                    if(error || response.statusCode != 201) {
-                        console.log(response.statusCode, ": ", error);
-                        callback({
-                            "status": "error"
-                        });
-                    } else {
-                        callback(body);
+            if(!me.client) {
+                me.client = net.connect({
+                    host: me.configuration.getHost(),
+                    port: me.configuration.getPort()
+                }, function () {
+                    console.log("NLP client started.");
+                    callback();
+                });
+                me.client.on('data', function (data) {
+                    me.replyBuffer += data.toString();
+                    if(me.replyBuffer.match("</root>")) {
+                        me.reply(me.replyBuffer);
                     }
                 });
-            } else {
-                request.get(url, function (error, response, body) {
-                    if(error || response.statusCode != 200) {
-                        console.log(response.statusCode, ": ", error);
-                        callback({
-                            "status": "error"
-                        });
-                    } else {
-                        callback(body);
-                    }
+                me.client.on('end', function () {
+                    console.log('NLP client disconnected.');
                 });
             }
         };
@@ -130,12 +111,10 @@ var xml2json = require("xml2json");
             var myInstance = this;
             var nlpProgram = this.configuration.getPath();
             var nlpDir = this.configuration.getNlpLibDir();
-            var classpath = this.configuration.getClasspath();
             var propsLocation = this.configuration.getPropsPath();
             console.log("Starting: ", nlpProgram);
             var args = [
-                nlpDir, 
-                classpath
+                nlpDir
             ];
             if(propsLocation && fs.existsSync(propsLocation)) {
                 args.push('-props');
@@ -146,7 +125,7 @@ var xml2json = require("xml2json");
             });
             this.nlpProcess.stdout.on("data", function (data) {
                 console.log(data);
-                if(data.match("running on port")) {
+                if(data.match("listening on port")) {
                     myInstance.startClient(myInstance, callback);
                 }
             });
@@ -189,16 +168,6 @@ var xml2json = require("xml2json");
     StanfordCoreNLP.ServerStatus = ServerStatus;    
     var ServerConfiguration = (function () {
         function ServerConfiguration() {
-            this.id = "stanford-corenlp";
-            this.name = null;
-            this.debug = false;
-            this.description = null;
-            this.path = null;
-            this.classpath = ".";
-            this.nlpLibDir = null;
-            this.host = null;
-            this.port = null;
-            this.propsPath = null;
             this.outputFormat = "json";
         }
         ServerConfiguration.prototype.getId = function () {
@@ -213,20 +182,6 @@ var xml2json = require("xml2json");
         };
         ServerConfiguration.prototype.setName = function (newValue) {
             this.name = newValue;
-            return this;
-        };
-        ServerConfiguration.prototype.getClasspath = function () {
-            return this.classpath;
-        };
-        ServerConfiguration.prototype.setClasspath = function (newValue) {
-            this.classpath = newValue;
-            return this;
-        };
-        ServerConfiguration.prototype.getDebug = function () {
-            return this.debug;
-        };
-        ServerConfiguration.prototype.setDebug = function (newValue) {
-            this.debug = newValue;
             return this;
         };
         ServerConfiguration.prototype.getDescription = function () {
@@ -279,7 +234,6 @@ var xml2json = require("xml2json");
             return this;
         };
         ServerConfiguration.readFromFile = function readFromFile(path) {
-            console.log("Loading config file: ", path);
             var obj = JSON.parse(fs.readFileSync(path, 'utf8'));
             var returnObj = new ServerConfiguration();
             for(var prop in obj) {
@@ -297,4 +251,4 @@ var xml2json = require("xml2json");
     StanfordCoreNLP.ServerConfiguration = ServerConfiguration;    
 })(exports.StanfordCoreNLP || (exports.StanfordCoreNLP = {}));
 var StanfordCoreNLP = exports.StanfordCoreNLP;
-//@ sourceMappingURL=StanfordCoreNLP.js.map
+//@ sourceMappingURL=StanfordCoreNLP-v1.js.map
