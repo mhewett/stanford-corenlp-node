@@ -132,9 +132,11 @@ var xml2json = require("xml2json");
             var nlpDir = this.configuration.getNlpLibDir();
             var classpath = this.configuration.getClasspath();
             var propsLocation = this.configuration.getPropsPath();
+            var nlpLibraries = this.configuration.getNlpLibraries();
             console.log("Starting: ", nlpProgram);
             var args = [
                 nlpDir, 
+                nlpLibraries, 
                 classpath
             ];
             if(propsLocation && fs.existsSync(propsLocation)) {
@@ -196,6 +198,7 @@ var xml2json = require("xml2json");
             this.path = null;
             this.classpath = ".";
             this.nlpLibDir = null;
+            this.nlpLibraries = null;
             this.host = null;
             this.port = null;
             this.propsPath = null;
@@ -241,6 +244,13 @@ var xml2json = require("xml2json");
         };
         ServerConfiguration.prototype.setNlpLibDir = function (newValue) {
             this.nlpLibDir = newValue;
+            return this;
+        };
+        ServerConfiguration.prototype.getNlpLibraries = function () {
+            return this.nlpLibraries;
+        };
+        ServerConfiguration.prototype.setNlpLibraries = function (newValue) {
+            this.nlpLibraries = newValue;
             return this;
         };
         ServerConfiguration.prototype.getOutputFormat = function () {

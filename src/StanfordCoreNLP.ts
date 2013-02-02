@@ -243,10 +243,11 @@ export module StanfordCoreNLP {
             var nlpDir = this.configuration.getNlpLibDir();
             var classpath = this.configuration.getClasspath();
             var propsLocation = this.configuration.getPropsPath();
+            var nlpLibraries = this.configuration.getNlpLibraries();
             console.log("Starting: ", nlpProgram);
             
             // Set up the arguments.
-            var args = [nlpDir, classpath];
+            var args = [nlpDir, nlpLibraries, classpath];
             if (propsLocation && fs.existsSync(propsLocation)) {
                 args.push('-props');
                 args.push(propsLocation);  // path.resolve(__dirname, propsLocation));
@@ -321,7 +322,8 @@ export module StanfordCoreNLP {
         private description: string = null; 
         private path: string = null;            // The path to the executable program.
         private classpath: string = ".";        // Optional classpath
-        private nlpLibDir: string = null;       // Folder containing NLP library
+        private nlpLibDir: string = null;       // Folder containing NLP library jars
+        private nlpLibraries: string = null;    // NLP libraries to use
         private host: string = null;            // "localhost"
         private port: string = null;            // "1234",
         private propsPath: string = null;       // Path to the properties file.
@@ -390,6 +392,17 @@ export module StanfordCoreNLP {
         /** Setter */
         public setNlpLibDir(newValue: string) {
             this.nlpLibDir = newValue; 
+            return this;
+        }
+
+        /** Getter */
+        public getNlpLibraries() { 
+            return this.nlpLibraries;
+        }
+
+        /** Setter */
+        public setNlpLibraries(newValue: string) {
+            this.nlpLibraries = newValue; 
             return this;
         }
 
